@@ -1,0 +1,65 @@
+SENDER
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
+int main() {
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in addr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(17000),
+        .sin_addr.s_addr = INADDR_ANY
+    };
+
+    bind(sock, (struct sockaddr*)&addr, sizeof(addr));
+    listen(sock, 1);
+    int client = accept(sock, NULL, NULL);
+
+    char frame[30];
+    for(int i=1; ; i++) {
+        printf("Enter Frame %d (type 'exit'): ", i);
+        scanf("%s", frame);
+        send(client, frame, strlen(frame), 0);
+        if(strcmp(frame, "exit") == 0) break;
+
+        char ack[10];
+        recv(client, ack, 10, 0);
+        printf("ACK: %s\n", ack);
+    }
+    close(sock);
+}
+
+
+RECEIVER
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+int main() {
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in addr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(17000),
+        .sin_addr.s_addr = inet_addr("127.0.0.1")
+    };
+
+    connect(sock, (struct sockaddr*)&addr, sizeof(addr));
+
+    for(int i=1; ; i++) {
+        char frame[30];
+        int bytes = recv(sock, frame, 30, 0);
+        frame[bytes] = '\0';
+
+        if(strcmp(frame, "exit") == 0) break;
+        printf("Received Frame %d: %s\n", i, frame);
+        send(sock, "ACK", 3, 0); // Simplified ACK
+    }
+    close(sock);
+}

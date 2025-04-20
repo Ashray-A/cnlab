@@ -1,0 +1,140 @@
+SERVER
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#define PORT 8080
+
+int main() {
+    int server_fd, client_fd;
+    struct sockaddr_in address;
+    char filename[256], buffer[1024];
+    
+    
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("socket failed");
+        exit(EXIT_FAILURE);
+    }
+    
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+    
+    
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        perror("bind failed");
+        exit(EXIT_FAILURE);
+    }
+    
+    
+    if (listen(server_fd, 3) < 0) {
+        perror("listen");
+        exit(EXIT_FAILURE);
+    }
+    
+    printf("Server listening on port %d...\n", PORT);
+    
+    
+    int addrlen = sizeof(address);
+    if ((client_fd = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
+        perror("accept");
+        exit(EXIT_FAILURE);
+    }
+    
+    
+    int bytes_read = read(client_fd, filename, sizeof(filename) - 1);
+    if (bytes_read < 0) {
+        perror("read");
+        close(client_fd);
+        exit(EXIT_FAILURE);
+    }
+    filename[bytes_read] = '\0';
+    printf("Requested file: %s\n", filename);
+    
+    
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        send(client_fd, "FILE_NOT_FOUND", 14, 0);
+        close(client_fd);
+        return 0;
+    }
+    
+    
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+        send(client_fd, buffer, strlen(buffer), 0);
+    }
+    
+    fclose(file);
+    close(client_fd);
+    return 0;
+}
+
+
+CLIENT
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+
+#define PORT 8080
+
+int main() {
+    int sock;
+    struct sockaddr_in serv_addr;
+    char filename[256], buffer[1024] = {0};
+    
+    // Create socket
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("Socket creation error\n");
+        return -1;
+    }
+    
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    
+    
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+        printf("Invalid address\n");
+        return -1;
+    }
+    
+    
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        printf("Connection failed\n");
+        return -1;
+    }
+    
+    printf("Enter filename: ");
+    scanf("%s", filename);
+    
+    
+    send(sock, filename, strlen(filename), 0);
+    
+    
+    printf("File contents:\n");
+    while (read(sock, buffer, sizeof(buffer)) > 0) {
+        printf("%s", buffer);
+        memset(buffer, 0, sizeof(buffer));
+    }
+    
+    close(sock);
+    return 0;
+}
+
+
+
+
+
+# Server
+Server listening on port 8080...
+Requested file: example.txt
+
+# Client
+Enter filename: example.txt
+File contents:
+This is a test file.

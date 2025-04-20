@@ -1,0 +1,43 @@
+#include <stdio.h>
+
+int main() {
+    int bucket, rate, secs, i;
+
+    printf("LEAKY BUCKET\nEnter bucket size, output rate, seconds: ");
+    scanf("%d%d%d", &bucket, &rate, &secs);
+
+    int load = 0;
+    int drop;
+
+    for (i = 1; i <= secs; i++) {
+        int pkt;
+        printf("Packets at second %d: ", i);
+        scanf("%d", &pkt);
+
+        load += pkt;
+
+        drop = (load > bucket) ? (load - bucket) : 0;
+        load = (load > bucket) ? bucket : load;
+
+        int sent = (load < rate) ? load : rate;
+        load -= sent;
+
+        printf("(%d)\t%d\t%d\t%d\t%d\n", i, pkt, sent, load, drop);
+    }
+
+    while (load > 0) {
+        int sent = (load < rate) ? load : rate;
+        load -= sent;
+        printf("(%d)\t0\t%d\t%d\t0\n", ++i, sent, load);
+    }
+
+    return 0;
+}
+3 1 2
+2
+2
+
+(1)    2    1    1    0
+(2)    2    1    2    0
+(3)    0    1    1    0
+(4)    0    1    0    0

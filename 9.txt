@@ -1,0 +1,33 @@
+#include <stdio.h>
+
+int main() {
+    int bucket_size, output_rate, current = 0;
+    
+    printf("Enter bucket size: ");
+    scanf("%d", &bucket_size);
+    printf("Enter output rate: ");
+    scanf("%d", &output_rate);
+    
+    while(1) {
+        int incoming;
+        printf("\nEnter incoming packets (-1 to exit): ");
+        scanf("%d", &incoming);
+        
+        if(incoming == -1) break;
+        
+        // Add incoming packets to bucket
+        if(incoming + current > bucket_size) {
+            int dropped = incoming + current - bucket_size;
+            printf("Dropped %d packets\n", dropped);
+            current = bucket_size;
+        } else {
+            current += incoming;
+        }
+        
+        // Leak packets at output rate
+        current = (current > output_rate) ? current - output_rate : 0;
+        printf("Current in bucket: %d\n", current);
+    }
+    
+    return 0;
+}

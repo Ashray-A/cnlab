@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <string.h>
+
+#define POLY "10001000000100001"
+
+void computeCRC(char data[], char crc[]) {
+    char temp[120];
+    
+    strcpy(temp, data);
+    strcat(temp, "0000000000000000");
+    
+    for (int i = 0; i < strlen(data); i++) {
+        if (temp[i] == '1') {
+            for (int j = 0; j <=16; j++)
+                temp[i + j] = (temp[i + j] == POLY[j]) ? '0' : '1';
+        }
+    }
+    
+    strncpy(crc, temp + strlen(data), 16);
+    crc[16] = '\0';
+}
+
+int checkCRC(char frame[]) {
+    char receivedCRC[17];
+    
+    computeCRC(frame, receivedCRC);
+    
+    return strcmp(receivedCRC, "0000000000000000") == 0;
+}
+
+int main() {
+    char data[100], crc[17], frame[120];
+    
+    printf("Enter binary data: ");
+    scanf("%s", data);
+    
+    computeCRC(data, crc);
+    
+    strcpy(frame, data);
+    strcat(frame, crc);
+    
+    printf("\nTransmitted Frame: %s\n", frame);
+    
+    printf("\nEnter received frame: ");
+    scanf("%s", frame);
+    
+    if (checkCRC(frame))
+        printf("Frame is ERROR-FREE\n");
+    else
+        printf("Frame has ERRORS!\n");
+    
+    return 0;
+}
+
+
+
+
+OUTPUT
+
+Enter binary data: 1101
+
+Transmitted Frame: 11011101000110101101
+
+Enter received frame: 11011101000110101101
+Frame is ERROR-FREE

@@ -1,0 +1,59 @@
+SERVER
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+int main() {
+    char *fifo = "myfifo";
+    mkfifo(fifo, 0666);
+
+    int fd = open(fifo, O_RDONLY);
+    FILE *out = fopen("output.txt", "wb");
+
+    char buf[1024];
+    int bytes;
+    while ((bytes = read(fd, buf, sizeof(buf))) > 0) {
+        fwrite(buf, 1, bytes, out);
+    }
+
+    close(fd);
+    fclose(out);
+
+    // Display received contents
+    printf("\nReceived file contents:\n");
+    FILE *received = fopen("output.txt", "r");
+    while (fgets(buf, sizeof(buf), received)) {
+        printf("%s", buf);
+    }
+    fclose(received);
+    
+    unlink(fifo);
+    return 0;
+}
+
+
+CLIENT
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+int main() {
+    char *fifo = "myfifo";
+    int fd = open(fifo, O_WRONLY);
+    FILE *in = fopen("input.txt", "rb");
+
+    char buf[1024];
+    int bytes;
+    while ((bytes = fread(buf, 1, sizeof(buf), in)) {
+        write(fd, buf, bytes);
+    }
+
+    close(fd);
+    fclose(in);
+    return 0;
+}

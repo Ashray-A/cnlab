@@ -1,0 +1,54 @@
+#include <stdio.h>
+
+int h[8];
+
+void generateParity() {
+    h[1] = h[3] ^ h[5] ^ h[7];
+    h[2] = h[3] ^ h[6] ^ h[7];
+    h[4] = h[5] ^ h[6] ^ h[7];
+}
+
+void introduceError() {
+    int pos;
+    printf("\nEnter error position (1-7): ");
+    scanf("%d", &pos);
+    h[pos] ^= 1;
+}
+
+void correctError() {
+    int errorPos = 0;
+    errorPos += (h[1] != (h[3] ^ h[5] ^ h[7])) * 1;
+    errorPos += (h[2] != (h[3] ^ h[6] ^ h[7])) * 2;
+    errorPos += (h[4] != (h[5] ^ h[6] ^ h[7])) * 4;
+
+    if (errorPos) {
+        printf("\nError detected at position: %d", errorPos);
+        h[errorPos] ^= 1;
+    } else {
+        printf("\nNo error detected.");
+    }
+}
+
+int main() {
+    printf("Enter 4 data bits (e.g., 1 0 1 0): ");
+    scanf("%d %d %d %d", &h[3], &h[5], &h[6], &h[7]);
+
+    generateParity();
+    printf("\nGenerated Hamming Code: ");
+    for (int i = 1; i <= 7; i++) printf("%d ", h[i]);
+
+    int choice;
+    printf("\nIntroduce error? (1=Yes, 0=No): ");
+    scanf("%d", &choice);
+    if (choice == 1) {
+        introduceError();
+        printf("\nCorrupted Code: ");
+        for (int i = 1; i <= 7; i++) printf("%d ", h[i]);
+    }
+
+    correctError();
+    printf("\nFinal Code: ");
+    for (int i = 1; i <= 7; i++) printf("%d ", h[i]);
+
+    return 0;
+}

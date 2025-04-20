@@ -1,0 +1,23 @@
+#include <stdio.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+
+int main() {
+    char host[100];
+    printf("Enter domain name: ");
+    scanf("%99s", host);
+
+    struct hostent *h = gethostbyname(host);
+    if (h == NULL) {
+        printf("DNS lookup failed\n");
+        return 1;
+    }
+
+    printf("IP addresses for %s:\n", host);
+    struct in_addr **addr_list = (struct in_addr **)h->h_addr_list;
+    for(int i = 0; addr_list[i] != NULL; i++) {
+        printf("%s\n", inet_ntoa(*addr_list[i]));
+    }
+    
+    return 0;
+}
